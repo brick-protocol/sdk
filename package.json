@@ -1,0 +1,27 @@
+{
+    "name": "brick-sdk",
+    "license": "MIT",
+    "version": "0.0.1",
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsup index.ts --format cjs,esm --dts",
+        "lint": "tsc"
+    },
+    "devDependencies": {
+        "@types/bn.js": "^5.1.1",
+        "@types/node": "^20.5.0",
+        "@types/uuid": "^9.0.4",
+        "tsup": "^7.2.0",
+        "typescript": "^5.1.6"
+    },
+    "dependencies": {
+        "@metaplex-foundation/beet": "^0.7.1",
+        "@metaplex-foundation/beet-solana": "^0.4.0",
+        "@solana/spl-token": "^0.3.8",
+        "@solana/web3.js": "^1.78.4",
+        "bn.js": "^5.2.1",
+        "uuid": "^9.0.1"
+    }
+}
