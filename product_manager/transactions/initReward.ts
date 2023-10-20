@@ -1,16 +1,16 @@
 import { Connection, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { InitRewardVaultInstructionAccounts, createInitRewardVaultInstruction } from "../utils/solita"
-import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { BRICK_PROGRAM_ID_PK } from "../constants";
+import { InitRewardInstructionAccounts, createInitRewardInstruction } from "../../utils/solita"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { BRICK_PROGRAM_ID_PK } from "../../constants";
 
-type InitRewardVaultAccounts = {
+type InitRewardAccounts = {
     signer: PublicKey
     rewardMint: PublicKey
 }
 
-export async function createInitRewardVaultTransaction(
+export async function createInitRewardTransaction(
     connection: Connection, 
-    accounts: InitRewardVaultAccounts, 
+    accounts: InitRewardAccounts, 
 ): Promise<VersionedTransaction> {
     const [marketplace] = PublicKey.findProgramAddressSync(
         [
@@ -36,17 +36,16 @@ export async function createInitRewardVaultTransaction(
         ],
         BRICK_PROGRAM_ID_PK
     );
-    const ixAccounts: InitRewardVaultInstructionAccounts = {
+    const ixAccounts: InitRewardInstructionAccounts = {
         ...accounts,
         systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: SYSVAR_RENT_PUBKEY,
         marketplace,
         reward,
         rewardVault,
     };
-    const ix = createInitRewardVaultInstruction(ixAccounts);
+    const ix = createInitRewardInstruction(ixAccounts);
     let blockhash = (await connection.getLatestBlockhash('finalized')).blockhash;
     const messageV0 = new TransactionMessage({
         payerKey: accounts.signer,

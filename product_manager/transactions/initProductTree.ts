@@ -1,8 +1,9 @@
-import { InitProductTreeInstructionAccounts, InitProductTreeInstructionArgs, createInitProductTreeInstruction, getConcurrentMerkleTreeAccountSize } from "../utils";
-import { BRICK_PROGRAM_ID_PK, BUBBLEGUM_PROGRAM_ID_PK, COMPRESSION_PROGRAM_ID_PK, METADATA_PROGRAM_ID_PK, NOOP_PROGRAM_ID_PK } from "../constants";
+import { InitProductTreeInstructionAccounts, InitProductTreeInstructionArgs, createInitProductTreeInstruction, getConcurrentMerkleTreeAccountSize } from "../../utils";
+import { BRICK_PROGRAM_ID_PK, BUBBLEGUM_PROGRAM_ID_PK, COMPRESSION_PROGRAM_ID_PK, METADATA_PROGRAM_ID_PK, NOOP_PROGRAM_ID_PK } from "../../constants";
 import { Connection, Keypair, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { normalizePrice } from "../utils/normalizePrice";
+import { normalizePrice } from "../../utils/normalizePrice";
+import { deriveBrickPda } from "../../utils/derivePda";
 import { parse } from 'uuid'
 
 type InitProductTreeAccounts = {
@@ -28,13 +29,9 @@ export async function createInitProductTreeTransaction(
     params: InitProductTreeParams
 ): Promise<VersionedTransaction> {
     const id = parse(params.id);
-    const [accessMint] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("access_mint", "utf-8"),
-          accounts.marketplace.toBuffer(),
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
+    const accessMint = deriveBrickPda("access_mint", [accounts.marketplace]);
+    const accessVault = getAssociatedTokenAddressSync(accessMint, accounts.signer, false, TOKEN_2022_PROGRAM_ID);
+    const accessVaultExists = await connection.getAccountInfo(accessVault);
     const [product] = PublicKey.findProgramAddressSync(
         [
           Buffer.from("product", "utf-8"), 
@@ -94,7 +91,7 @@ export async function createInitProductTreeTransaction(
         product: product,
         productMint: productMint,
         accessMint: accessMint,
-        accessVault: getAssociatedTokenAddressSync(accessMint, accounts.signer, false, TOKEN_2022_PROGRAM_ID),
+        accessVault: accessVaultExists ? accessVault : null,
         productMintVault: getAssociatedTokenAddressSync(productMint, product, true),
         masterEdition: masterEdition,
         metadata: metadata,
@@ -124,5 +121,6 @@ export async function createInitProductTreeTransaction(
 
     const transaction = new VersionedTransaction(messageV0);
     transaction.sign([merkleTree]);
+    
     return transaction;
 }

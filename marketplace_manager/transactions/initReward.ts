@@ -1,7 +1,7 @@
 import { Connection, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { InitRewardInstructionAccounts, createInitRewardInstruction } from "../utils/solita"
+import { InitRewardInstructionAccounts, createInitRewardInstruction } from "../../utils/solita"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { BRICK_PROGRAM_ID_PK } from "../constants";
+import { deriveBrickPda } from "../../utils/derivePda";
 
 type InitRewardAccounts = {
     signer: PublicKey
@@ -12,30 +12,11 @@ export async function createInitRewardTransaction(
     connection: Connection, 
     accounts: InitRewardAccounts, 
 ): Promise<VersionedTransaction> {
-    const [marketplace] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("marketplace", "utf-8"),
-          accounts.signer.toBuffer()
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
-    const [reward] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("reward", "utf-8"), 
-          accounts.signer.toBuffer(),
-          marketplace.toBuffer()
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
-    const [rewardVault] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("reward_vault", "utf-8"), 
-          accounts.signer.toBuffer(),
-          marketplace.toBuffer(),
-          accounts.rewardMint.toBuffer(),
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
+    
+    const marketplace = deriveBrickPda("marketplace", [accounts.signer]);
+    const reward = deriveBrickPda("reward", [accounts.signer, marketplace]);
+    const rewardVault = deriveBrickPda("reward_vault", [accounts.signer, marketplace, accounts.rewardMint]);
+
     const ixAccounts: InitRewardInstructionAccounts = {
         ...accounts,
         systemProgram: SystemProgram.programId,

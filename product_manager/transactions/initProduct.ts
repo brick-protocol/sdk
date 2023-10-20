@@ -1,8 +1,9 @@
 import { Connection, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { InitProductInstructionAccounts, InitProductInstructionArgs, createInitProductInstruction } from "../utils";
+import { InitProductInstructionAccounts, InitProductInstructionArgs, createInitProductInstruction } from "../../utils";
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { normalizePrice } from "../utils/normalizePrice";
-import { BRICK_PROGRAM_ID_PK } from "../constants";
+import { normalizePrice } from "../../utils/normalizePrice";
+import { BRICK_PROGRAM_ID_PK } from "../../constants";
+import { deriveBrickPda } from "../../utils/derivePda";
 import { parse } from 'uuid'
 
 type InitProductAccounts = {
@@ -22,13 +23,9 @@ export async function createInitProductTransaction(
     params: InitProductParams
 ): Promise<VersionedTransaction> {
     const id = parse(params.id);
-    const [accessMint] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("access_mint", "utf-8"),
-          accounts.marketplace.toBuffer(),
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
+    const accessMint = deriveBrickPda("access_mint", [accounts.marketplace]);
+    const accessVault = getAssociatedTokenAddressSync(accessMint, accounts.signer, false, TOKEN_2022_PROGRAM_ID);
+    const accessVaultExists = await connection.getAccountInfo(accessVault);
     const [product] = PublicKey.findProgramAddressSync(
         [
           Buffer.from("product", "utf-8"), 
@@ -51,7 +48,7 @@ export async function createInitProductTransaction(
         product,
         productMint,
         accessMint,
-        accessVault: getAssociatedTokenAddressSync(accessMint, accounts.signer, false, TOKEN_2022_PROGRAM_ID),
+        accessVault: accessVaultExists ? accessVault : null,
     };
     const args: InitProductInstructionArgs = {
         params: {

@@ -1,9 +1,9 @@
-import { NATIVE_MINT, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { Connection, PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { RegisterBuyFungibleInstructionAccounts, createRegisterBuyFungibleInstruction } from "../utils/solita"
-import { BRICK_PROGRAM_ID_PK } from "../constants";
+import { Connection, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { NATIVE_MINT, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { RegisterBuyInstructionAccounts, createRegisterBuyInstruction } from "../../utils/solita"
+import { BRICK_PROGRAM_ID_PK } from "../../constants";
 
-type RegisterBuyFungibleAccounts = {
+type RegisterBuyAccounts = {
     signer: PublicKey
     marketplace: PublicKey
     product: PublicKey
@@ -12,21 +12,21 @@ type RegisterBuyFungibleAccounts = {
     paymentMint: PublicKey
 }
 
-type RegisterBuyFungibleParams = {
+type RegisterBuyParams = {
     rewardsActive: boolean
-    transferable: boolean
     amount: number
 }
 
-export async function createRegisterBuyTokenTransaction(
+export async function createRegisterBuyTransaction(
     connection: Connection, 
-    accounts: RegisterBuyFungibleAccounts, 
-    params: RegisterBuyFungibleParams
+    accounts: RegisterBuyAccounts, 
+    params: RegisterBuyParams
 ): Promise<VersionedTransaction> {
-    const [productMint] = PublicKey.findProgramAddressSync(
+    const [payment] = PublicKey.findProgramAddressSync(
         [
-          Buffer.from("product_mint", "utf-8"), 
-          accounts.product.toBuffer()
+            Buffer.from("payment", "utf-8"), 
+            accounts.signer.toBuffer(), 
+            accounts.product.toBuffer(),
         ],
         BRICK_PROGRAM_ID_PK
     );
@@ -72,12 +72,11 @@ export async function createRegisterBuyTokenTransaction(
         ],
         BRICK_PROGRAM_ID_PK
     );
-    const ixAccounts: RegisterBuyFungibleInstructionAccounts = {
+    const ixAccounts: RegisterBuyInstructionAccounts = {
         ...accounts,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
-        productMint,
-        buyerTokenVault: params.transferable ? getAssociatedTokenAddressSync(productMint, accounts.signer, false, TOKEN_PROGRAM_ID) : getAssociatedTokenAddressSync(productMint, accounts.signer, false, TOKEN_2022_PROGRAM_ID),
+        rent: SYSVAR_RENT_PUBKEY,
         buyerTransferVault: accounts.paymentMint !== NATIVE_MINT ? getAssociatedTokenAddressSync(accounts.paymentMint, accounts.signer, false, TOKEN_PROGRAM_ID) : null,
         sellerTransferVault: accounts.paymentMint !== NATIVE_MINT ? getAssociatedTokenAddressSync(accounts.paymentMint, accounts.seller, false, TOKEN_PROGRAM_ID) : null,
         marketplaceTransferVault: accounts.paymentMint !== NATIVE_MINT ? getAssociatedTokenAddressSync(accounts.paymentMint, accounts.marketplaceAuth, false, TOKEN_PROGRAM_ID) : null,
@@ -87,7 +86,7 @@ export async function createRegisterBuyTokenTransaction(
         buyerReward: params.rewardsActive ? buyerReward : null,
         buyerRewardVault: params.rewardsActive ? buyerRewardVault : null,
     };
-    const ix = createRegisterBuyFungibleInstruction(ixAccounts, {amount: params.amount});
+    const ix = createRegisterBuyInstruction(ixAccounts, {amount: params.amount});
     let blockhash = (await connection.getLatestBlockhash('finalized')).blockhash;
     const messageV0 = new TransactionMessage({
         payerKey: accounts.signer,

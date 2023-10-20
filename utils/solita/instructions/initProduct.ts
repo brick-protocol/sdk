@@ -12,6 +12,7 @@ import {
   InitProductParams,
   initProductParamsBeet,
 } from '../types/InitProductParams.js'
+import { BRICK_PROGRAM_ID_PK } from '../../../constants.js'
 
 /**
  * @category Instructions
@@ -57,8 +58,8 @@ export type InitProductInstructionAccounts = {
   product: web3.PublicKey
   productMint: web3.PublicKey
   paymentMint: web3.PublicKey
-  accessMint?: web3.PublicKey
-  accessVault?: web3.PublicKey
+  accessMint?: web3.PublicKey | null
+  accessVault?: web3.PublicKey | null
   rent?: web3.PublicKey
   systemProgram?: web3.PublicKey
   tokenProgram?: web3.PublicKey
@@ -127,6 +128,12 @@ export function createInitProductInstruction(
       isWritable: true,
       isSigner: false,
     })
+  } else {
+    keys.push({
+      pubkey: BRICK_PROGRAM_ID_PK,
+      isWritable: false,
+      isSigner: false,
+    })
   }
   if (accounts.accessVault != null) {
     if (accounts.accessMint == null) {
@@ -137,6 +144,12 @@ export function createInitProductInstruction(
     keys.push({
       pubkey: accounts.accessVault,
       isWritable: true,
+      isSigner: false,
+    })
+  } else {
+    keys.push({
+      pubkey: BRICK_PROGRAM_ID_PK,
+      isWritable: false,
       isSigner: false,
     })
   }

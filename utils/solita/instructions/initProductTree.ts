@@ -12,6 +12,7 @@ import {
   InitProductTreeParams,
   initProductTreeParamsBeet,
 } from '../types/InitProductTreeParams.js'
+import { BRICK_PROGRAM_ID_PK } from '../../../constants.js'
 
 /**
  * @category Instructions
@@ -69,7 +70,7 @@ export type InitProductTreeInstructionAccounts = {
   paymentMint: web3.PublicKey
   accessMint?: web3.PublicKey
   productMintVault: web3.PublicKey
-  accessVault?: web3.PublicKey
+  accessVault?: web3.PublicKey | null
   masterEdition: web3.PublicKey
   metadata: web3.PublicKey
   merkleTree: web3.PublicKey
@@ -147,6 +148,12 @@ export function createInitProductTreeInstruction(
       isWritable: true,
       isSigner: false,
     })
+  } else {
+    keys.push({
+      pubkey: BRICK_PROGRAM_ID_PK,
+      isWritable: false,
+      isSigner: false,
+    })
   }
   keys.push({
     pubkey: accounts.productMintVault,
@@ -162,6 +169,12 @@ export function createInitProductTreeInstruction(
     keys.push({
       pubkey: accounts.accessVault,
       isWritable: true,
+      isSigner: false,
+    })
+  } else {
+    keys.push({
+      pubkey: BRICK_PROGRAM_ID_PK,
+      isWritable: false,
       isSigner: false,
     })
   }

@@ -1,7 +1,9 @@
-import { InitMarketplaceInstructionAccounts, PaymentFeePayer, createInitMarketplaceInstruction, InitMarketplaceParams as InitMarketplaceParamsBump } from "../utils";
 import { Connection, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { InitMarketplaceInstructionAccounts, createInitMarketplaceInstruction } from "../../utils";
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { BRICK_PROGRAM_ID_PK } from "../constants";
+import { deriveBrickPda } from "../../utils/derivePda";
+import { BRICK_PROGRAM_ID_PK } from "../../constants";
+import { PaymentFeePayer } from "../../types";
 
 type InitMarketplaceAccounts = {
     signer: PublicKey
@@ -25,21 +27,11 @@ export async function createInitMarketplaceTransaction(
     accounts: InitMarketplaceAccounts, 
     params: InitMarketplaceParams
 ): Promise<VersionedTransaction> {
-    const [marketplace] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("marketplace", "utf-8"),
-          accounts.signer.toBuffer()
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
-    const [bountyVault] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("bounty_vault", "utf-8"),
-          marketplace.toBuffer(),
-          accounts.rewardMint.toBuffer()
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
+    const marketplace = deriveBrickPda("marketplace", [accounts.signer]);
+    const bountyVault = deriveBrickPda("bounty_vault", [
+      marketplace.toString(),
+      accounts.rewardMint.toString()
+    ]);
     const [accessMint, accessMintBump] = PublicKey.findProgramAddressSync(
         [
           Buffer.from("access_mint", "utf-8"),
@@ -58,11 +50,7 @@ export async function createInitMarketplaceTransaction(
         accessMint,
         bountyVault,
     };
-    const paramsBump: InitMarketplaceParamsBump = {
-        ...params,
-        accessMintBump,
-    };
-    const ix = createInitMarketplaceInstruction(ixAccounts, { params: paramsBump });
+    const ix = createInitMarketplaceInstruction(ixAccounts, { params: { ...params, accessMintBump } });
     let blockhash = (await connection.getLatestBlockhash('finalized')).blockhash;
     const messageV0 = new TransactionMessage({
         payerKey: accounts.signer,

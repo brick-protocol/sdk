@@ -19,87 +19,34 @@ import * as solita from '../'
 import { InstructionType } from '../../../types'
 
 export function getInstructionType(data: Buffer): InstructionType | undefined {
-    const discriminator = data.slice(0, 8)
-    return IX_METHOD_CODE.get(discriminator.toString('ascii'))
+    const discriminator = Buffer.from(data.buffer, data.byteOffset, 8);
+    return IX_METHOD.get(discriminator.toString('ascii'));
 }
 
-export const IX_METHOD_CODE: Map<string, InstructionType | undefined> = new Map<
-    string,
-    InstructionType | undefined
->([
-    [
-        Buffer.from(solita.acceptAccessInstructionDiscriminator).toString('ascii'),
-        InstructionType.AcceptAccess,
-    ],
-    [
-        Buffer.from(solita.airdropAccessInstructionDiscriminator).toString('ascii'),
-        InstructionType.AirdropAccess,
-    ],
-    [
-        Buffer.from(solita.editProductInstructionDiscriminator).toString('ascii'),
-        InstructionType.EditProduct,
-    ],
-    [
-        Buffer.from(solita.editMarketplaceInstructionDiscriminator).toString(
-        'ascii',
-        ),
-        InstructionType.EditMarketplace,
-    ],
-    [
-        Buffer.from(solita.initBountyInstructionDiscriminator).toString('ascii'),
-        InstructionType.InitBounty,
-    ],
-    [
-        Buffer.from(solita.initMarketplaceInstructionDiscriminator).toString(
-        'ascii',
-        ),
-        InstructionType.InitMarketplace,
-    ],
-    [
-        Buffer.from(solita.initProductTreeInstructionDiscriminator).toString(
-        'ascii',
-        ),
-        InstructionType.InitProductTree,
-    ],
-    [
-        Buffer.from(solita.initProductInstructionDiscriminator).toString('ascii'),
-        InstructionType.InitProduct,
-    ],
-    [
-        Buffer.from(solita.initRewardVaultInstructionDiscriminator).toString(
-        'ascii',
-        ),
-        InstructionType.InitRewardVault,
-    ],
-    [
-        Buffer.from(solita.initRewardInstructionDiscriminator).toString('ascii'),
-        InstructionType.InitReward,
-    ],
-    [
-        Buffer.from(solita.registerBuyCnftInstructionDiscriminator).toString(
-        'ascii',
-        ),
-        InstructionType.RegisterBuyCnft,
-    ],
-    [
-        Buffer.from(solita.registerBuyInstructionDiscriminator).toString('ascii'),
-        InstructionType.RegisterBuy,
-    ],
-    [
-        Buffer.from(solita.requestAccessInstructionDiscriminator).toString('ascii'),
-        InstructionType.RequestAccess,
-    ],
-    [
-        Buffer.from(solita.updateTreeInstructionDiscriminator).toString('ascii'),
-        InstructionType.UpdateTree,
-    ],
-    [
-        Buffer.from(solita.withdrawRewardInstructionDiscriminator).toString(
-        'ascii',
-        ),
-        InstructionType.WithdrawReward,
-    ],
-])
+const instructionDiscriminators = [
+    { discriminator: solita.acceptAccessInstructionDiscriminator, type: InstructionType.AcceptAccess },
+    { discriminator: solita.airdropAccessInstructionDiscriminator, type: InstructionType.AirdropAccess },
+    { discriminator: solita.editProductInstructionDiscriminator, type: InstructionType.EditProduct },
+    { discriminator: solita.editMarketplaceInstructionDiscriminator, type: InstructionType.EditMarketplace },
+    { discriminator: solita.initBountyInstructionDiscriminator, type: InstructionType.InitBounty },
+    { discriminator: solita.initMarketplaceInstructionDiscriminator, type: InstructionType.InitMarketplace },
+    { discriminator: solita.initProductTreeInstructionDiscriminator, type: InstructionType.InitProductTree },
+    { discriminator: solita.initProductInstructionDiscriminator, type: InstructionType.InitProduct },
+    { discriminator: solita.initRewardVaultInstructionDiscriminator, type: InstructionType.InitRewardVault },
+    { discriminator: solita.initRewardInstructionDiscriminator, type: InstructionType.InitReward },
+    { discriminator: solita.registerBuyCnftInstructionDiscriminator, type: InstructionType.RegisterBuyCnft },
+    { discriminator: solita.registerBuyInstructionDiscriminator, type: InstructionType.RegisterBuy },
+    { discriminator: solita.requestAccessInstructionDiscriminator, type: InstructionType.RequestAccess },
+    { discriminator: solita.updateTreeInstructionDiscriminator, type: InstructionType.UpdateTree },
+    { discriminator: solita.withdrawRewardInstructionDiscriminator, type: InstructionType.WithdrawReward },
+];
+
+export const IX_METHOD: Map<string, InstructionType | undefined> = new Map(
+    instructionDiscriminators.map(({ discriminator, type }) => [
+        Buffer.from(discriminator).toString('ascii'),
+        type,
+    ])
+);
 
 export const IX_DATA_LAYOUT: Partial<Record<InstructionType, any>> = {
     [InstructionType.AcceptAccess]: solita.acceptAccessStruct,

@@ -1,8 +1,8 @@
-import { EditProductInstructionAccounts, EditProductInstructionArgs, createEditProductInstruction } from "../utils/solita"
+import { EditProductInstructionAccounts, EditProductInstructionArgs, createEditProductInstruction } from "../../utils/solita"
 import { Connection, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
 
 // to-do: Multiple edits in the same transaction (applicable to other instructions)
-export async function createEditProducTransaction(
+export async function createEditProductTransaction(
     connection: Connection, 
     accounts: EditProductInstructionAccounts, 
     params: EditProductInstructionArgs

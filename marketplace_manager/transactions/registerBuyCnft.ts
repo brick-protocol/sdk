@@ -1,7 +1,8 @@
 import { ComputeBudgetProgram, Connection, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { BRICK_PROGRAM_ID_PK, BUBBLEGUM_PROGRAM_ID_PK, COMPRESSION_PROGRAM_ID_PK, METADATA_PROGRAM_ID_PK, NOOP_PROGRAM_ID_PK } from "../constants";
-import { RegisterBuyCnftInstructionAccounts, RegisterBuyCnftInstructionArgs, createRegisterBuyCnftInstruction } from "../utils/solita"
+import { BRICK_PROGRAM_ID_PK, BUBBLEGUM_PROGRAM_ID_PK, COMPRESSION_PROGRAM_ID_PK, METADATA_PROGRAM_ID_PK, NOOP_PROGRAM_ID_PK } from "../../constants";
+import { RegisterBuyCnftInstructionAccounts, RegisterBuyCnftInstructionArgs, createRegisterBuyCnftInstruction } from "../../utils/solita"
 import { NATIVE_MINT, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { deriveBrickPda } from "../../utils/derivePda";
 
 type RegisterBuyCnftAccounts = {
     signer: PublicKey
@@ -25,13 +26,24 @@ export async function createRegisterBuyCnftTransaction(
     accounts: RegisterBuyCnftAccounts, 
     params: RegisterBuyCnftParams
 ): Promise<VersionedTransaction> {
-    const [productMint] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("product_mint", "utf-8"), 
-          accounts.product.toBuffer()
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
+    const productMint = deriveBrickPda("product_mint", [accounts.product]);
+    const sellerReward = deriveBrickPda("reward", [
+        accounts.seller, accounts.marketplace
+    ]);
+    const sellerRewardVault = deriveBrickPda("reward_vault", [
+        accounts.seller, accounts.marketplace, accounts.paymentMint
+    ]);
+    
+    const buyerReward = deriveBrickPda("reward", [
+        accounts.signer, accounts.marketplace
+    ]);
+    const buyerRewardVault = deriveBrickPda("reward_vault", [
+        accounts.seller, accounts.marketplace, accounts.paymentMint
+    ]);
+    
+    const bountyVault = deriveBrickPda("bounty_vault", [
+        accounts.marketplace, accounts.paymentMint
+    ]);
     const [masterEdition] = PublicKey.findProgramAddressSync(
         [
             Buffer.from("metadata", "utf-8"),
@@ -55,48 +67,7 @@ export async function createRegisterBuyCnftTransaction(
     const [bubblegumSigner] = PublicKey.findProgramAddressSync(
         [Buffer.from("collection_cpi", "utf-8")], BUBBLEGUM_PROGRAM_ID_PK
     );
-    const [sellerReward] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("reward", "utf-8"), 
-          accounts.seller.toBuffer(),
-          accounts.marketplace.toBuffer()
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
-    const [sellerRewardVault] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("reward_vault", "utf-8"), 
-          accounts.seller.toBuffer(),
-          accounts.marketplace.toBuffer(),
-          accounts.paymentMint.toBuffer(),
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
-    const [buyerReward] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("reward", "utf-8"), 
-          accounts.signer.toBuffer(),
-          accounts.marketplace.toBuffer()
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
-    const [buyerRewardVault] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("reward_vault", "utf-8"), 
-          accounts.seller.toBuffer(),
-          accounts.marketplace.toBuffer(),
-          accounts.paymentMint.toBuffer(),
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
-    const [bountyVault] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("bounty_vault", "utf-8"),
-          accounts.marketplace.toBuffer(),
-          accounts.paymentMint.toBuffer()
-        ],
-        BRICK_PROGRAM_ID_PK
-    );
+
     const ixAccounts: RegisterBuyCnftInstructionAccounts = {
         ...accounts,
         systemProgram: SystemProgram.programId,

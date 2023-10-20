@@ -3,17 +3,30 @@ export * from './Marketplace'
 export * from './Product'
 export * from './Reward'
 
-import { Marketplace } from './Marketplace'
-import { Product } from './Product'
-import { Reward } from './Reward'
-import { Access } from './Access'
-
-export const accountProviders = { Marketplace, Product, Reward, Access }
+import * as solita from '../'
 
 export enum AccountType {
     Marketplace = 'Marketplace',
     Product = 'Product',
     Reward = 'Reward',
     Access = 'Access',
-    Payment = 'Payment',
 }
+
+export function getAccountType(data: Buffer): AccountType | undefined {
+    const discriminator = Buffer.from(data.buffer, data.byteOffset, 8);
+    return ACCOUNT_METHOD.get(discriminator.toString('ascii'))
+}
+
+const accountDiscriminators = [
+    { discriminator: solita.marketplaceDiscriminator, type: AccountType.Marketplace },
+    { discriminator: solita.productDiscriminator, type: AccountType.Product },
+    { discriminator: solita.rewardDiscriminator, type: AccountType.Reward },
+    { discriminator: solita.accessDiscriminator, type: AccountType.Access },
+];
+
+export const ACCOUNT_METHOD: Map<string, AccountType | undefined> = new Map(
+    accountDiscriminators.map(({ discriminator, type }) => [
+        Buffer.from(discriminator).toString('ascii'),
+        type,
+    ])
+);

@@ -1,3 +1,5 @@
+import { AccountType, accessBeet, marketplaceBeet, productBeet, rewardBeet } from './accounts'
+
 export * from './accounts/index.js'
 export * from './instructions/index.js'
 export * from './types/index.js'
@@ -225,3 +227,10 @@ export const WithdrawRewardAccounts = [
   'rewardVault',
   'tokenProgram',
 ]
+
+export const ACCOUNTS_DATA_LAYOUT: Record<AccountType, any> = {
+  [AccountType.Marketplace]: marketplaceBeet,
+  [AccountType.Product]: productBeet,
+  [AccountType.Reward]: rewardBeet,
+  [AccountType.Access]: accessBeet,
+}
