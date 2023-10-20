@@ -1,4 +1,6 @@
-import { parser } from "./parser";
-import { transactions } from "./transactions";
-
-export const ProductManager = { parser, transactions }
+import { ProductManagerParser } from './parser/index.js'
+import { ProductManagerTransactionBuilder } from './transaction-builder/index.js'
+export class ProductManager {
+  public parser = ProductManagerParser
+  public transacionBuilder = ProductManagerTransactionBuilder
+}
